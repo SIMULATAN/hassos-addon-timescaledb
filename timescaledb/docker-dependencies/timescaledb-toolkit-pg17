@@ -24,7 +24,7 @@ RUN apk update && apk add \
         boost-libs \
         boost-dev \
         openldap-dev \
-        clang19-libclang \
+        clang19-libclang
 
 USER postgres
 
