@@ -39,16 +39,14 @@ function build_dependency() {
     printInColor "Building docker dependency ${component}" "green"
 
     docker buildx build \
-        --push \
-        --platform "linux/amd64,linux/arm64,linux/arm/v7,linux/i386,linux/arm/v6" \
+        --platform "linux/amd64" \
         --cache-from "type=registry,ref=ghcr.io/expaso/timescaledb/${component}:cache" \
-        --cache-to "type=registry,ref=ghcr.io/expaso/timescaledb/${component}:cache,mode=max" \
         --tag "ghcr.io/expaso/timescaledb/${component}:${version}" \
         --progress plain \
         --build-arg "VERSION=${version}" \
         --file "./timescaledb/docker-dependencies/${component}" \
         . \
-        && printInColor "Done building docker image!" "green"    
+        && printInColor "Done building docker image!" "green"
 }
 
 function build() {
@@ -96,7 +94,7 @@ function run_local() {
 
     # Run the docker image locally
     mkdir -p /tmp/timescale_data
-    docker run --rm --name timescaledb --platform ${PLATFORM} -v /tmp/timescale_data:/data -p 5432:5432 ghcr.io/expaso/timescaledb/aarch64:dev  
+    docker run --rm --name timescaledb --platform ${PLATFORM} -v /tmp/timescale_data:/data -p 5432:5432 ghcr.io/expaso/timescaledb/aarch64:dev
 }
 
 function release() {
@@ -151,13 +149,12 @@ function build_buildx() {
         docker buildx build \
             --platform "${docker_platform}" \
             --cache-from type=registry,ref=ghcr.io/expaso/timescaledb:cache \
-            --cache-to type=registry,ref=ghcr.io/expaso/timescaledb:cache,mode=max \
             --tag "ghcr.io/expaso/timescaledb/${platform}:${tag}" \
             --build-arg "BUILD_FROM=${build_from}" \
             --build-arg "BUILD_ARCH=${platform}" \
             --build-arg "VERSION=${tag}" \
             --file ./timescaledb/Dockerfile \
-            --output type=registry,push=true \
+            --output type=registry,push=false \
             ./timescaledb \
             && printInColor "Done building docker image!" "green"
     done
@@ -165,13 +162,13 @@ function build_buildx() {
 }
 
 if [ "$1" == "build" ]; then
-    build "type=registry,push=true"
+    build "type=registry,push=false"
     exit 0
 
 elif [ "$1" == "build-dependencies" ]; then
-    # build_dependency timescaledb-tools "latest"
-    # build_dependency pgagent-pg16 "4.2.2"
-    # build_dependency timescaledb-toolkit-pg16 "1.18.0"
+    build_dependency timescaledb-tools "latest"
+    build_dependency pgagent-pg17 "4.8.14"
+    build_dependency timescaledb-toolkit-pg17 "1.19.0"
     # build_dependency postgis-pg15 "3.4.2"
     build_dependency postgresql-extension-system-stat-pg16 "3.2"
     exit 0
